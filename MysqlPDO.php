@@ -263,7 +263,7 @@ class MysqlPDO
         if('select' === strtolower($queryStr))
         {
 
-            $this->read_stmt = $this->conn->prepare($sql);
+            $this->read_stmt = $this->read_conn->prepare($sql);
 
             $this->read_stmt->execute($values);
         }
