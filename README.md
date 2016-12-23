@@ -13,6 +13,12 @@ $db = new MysqlPDO($db_host, $db_user, $db_password, $db_name);
 
 ```
 
+### 开启调试模式
+```php
+
+$db->debug = true;
+
+```
 ### 查询一条数据
 ```php
 
