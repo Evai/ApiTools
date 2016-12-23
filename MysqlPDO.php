@@ -192,7 +192,7 @@ class MysqlPDO
 
     }
 
-    function getError(Exception $e)
+    private function getError(Exception $e)
     {
         if ($this->debug) {
 
@@ -214,7 +214,7 @@ class MysqlPDO
      * @param $sql  执行语句
      * @param null $values
      */
-    function run($sql, $values = null)
+    private function run($sql, $values = null)
     {
         try {
 
@@ -255,7 +255,7 @@ class MysqlPDO
      * @param $sql  执行语句
      * @param null $values
      */
-    function separate($sql, $values = null) {
+    private function separate($sql, $values = null) {
 
         $queryStr = substr($sql, 0, 6);
 
@@ -306,7 +306,7 @@ class MysqlPDO
      */
     function table($name = '') {
 
-        $this->tableName = '`'.$name.'`';
+        $this->tableName = $name;
 
         return $this;
 
@@ -681,9 +681,8 @@ class MysqlPDO
 
         $this->clear();
 
-        if ($res > 0) return $res;
+        return $res;
 
-        return false;
     }
 
     /**
@@ -721,9 +720,8 @@ class MysqlPDO
 
         $this->clear();
 
-        if ($res > 0) return $res;
+        return $res;
 
-        return false;
     }
 
     /**
@@ -731,14 +729,14 @@ class MysqlPDO
      * @param array $values
      * @return string
      */
-    function parameterize(array $values)
+    private function parameterize(array $values)
     {
         return implode(', ', array_map([$this, 'parameter'], $values));
     }
     /*
      * 预处理绑定
      */
-    function parameter()
+    private function parameter()
     {
         return '?';
     }
@@ -1010,9 +1008,14 @@ class MysqlPDO
      * @param $tableName  表名
      * @return bool
      */
-    function dropTable($tableName)
+    function dropTable()
     {
-        $sql = "DROP TABLE $tableName";
+        if (empty($this->tableName))
+        {
+            return false;
+        }
+
+        $sql = "DROP TABLE {$this->tableName}";
 
         $this->run($sql);
 
@@ -1147,14 +1150,21 @@ class MysqlPDO
      * @param null $column  字段名
      * @return bool
      */
-    function addUnique($column = null)
+    function addUnique($column = array())
     {
         if (empty($this->tableName) || empty($column))
         {
             return false;
         }
 
-        $sql = "ALTER TABLE {$this->tableName} ADD UNIQUE ($column)";
+        if (!is_array($column))
+        {
+            $column = [$column];
+        }
+
+        $column = implode(', ', $column);
+
+        $sql = "ALTER TABLE {$this->tableName} ADD UNIQUE($column)";
 
         $this->run($sql);
 
@@ -1162,21 +1172,25 @@ class MysqlPDO
     }
 
     /**
-     * 添加普通索引（待完善）
-     * @param string $index
+     * 添加普通索引
      * @param array $column
      * @return bool
      */
-    function addIndex($index = '', array $column)
+    function addIndex($column = array())
     {
-        if (empty($this->tableName) || empty($column) || empty($index))
+        if (empty($this->tableName) || empty($column))
         {
             return false;
         }
 
+        if (!is_array($column))
+        {
+            $column = [$column];
+        }
+
         $column = implode(', ', $column);
 
-        $sql = "ALTER TABLE {$this->tableName} ADD INDEX NORMAL ($column) ";
+        $sql = "ALTER TABLE {$this->tableName} ADD INDEX($column) ";
 
         $this->run($sql);
 
@@ -1185,17 +1199,17 @@ class MysqlPDO
 
     /**
      * 删除索引
-     * @param null $column  字段名
+     * @param null $column  索引名
      * @return bool
      */
-    function dropIndex($column = null)
+    function dropIndex($indexName = null)
     {
-        if (empty($this->tableName) || empty($column))
+        if (empty($this->tableName) || empty($indexName))
         {
             return false;
         }
 
-        $sql = "DROP INDEX {$column} ON {$this->tableName}";
+        $sql = "ALTER TABLE {$this->tableName} DROP INDEX {$indexName}";
 
         $this->run($sql);
 
@@ -1214,7 +1228,7 @@ class MysqlPDO
             return false;
         }
 
-        $sql = "ALTER TABLE {$this->tableName} ADD PRIMARY KEY ($column)";
+        $sql = "ALTER TABLE {$this->tableName} ADD PRIMARY KEY($column)";
 
         $this->run($sql);
 
@@ -1239,14 +1253,22 @@ class MysqlPDO
         return true;
     }
 
-    /**
-     * 主键查询
-     * @param $id
-     * @return mixed
-     */
-    function find($id)
+    function showIndex()
     {
-        return $this->table($this->tableName)->where($this->primaryKey.' = ?', [$id])->first();
+        if (empty($this->tableName))
+        {
+            return false;
+        }
+
+        $sql = "SHOW INDEX FROM {$this->tableName}";
+
+        $this->run($sql);
+
+        $this->stmt->setFetchMode(PDO::FETCH_OBJ);
+
+        $data = $this->stmt->fetchAll();
+
+        return $data;
     }
 
 }
