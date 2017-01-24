@@ -321,7 +321,7 @@ $image->compress($width, $height);*/
 
 //$markImage->save('cloth.' . $markImage->getImageSuffix());
 
-$image->addImageSource('boat.png')
+$image->addImageSource('car.png')
     ->addImagePos(['x' => 10, 'y' => 10])
     ->addImageAlpha(100)
     ->addImageMark();
