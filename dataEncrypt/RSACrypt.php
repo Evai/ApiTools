@@ -17,14 +17,15 @@ class RSACrypt
     /**
      * RSACrypt constructor.
      * @param null $keyPath
+     * @param $bits
      */
-    public function __construct($keyPath = null)
+    public function __construct($keyPath = null, $bits = 2048)
     {
         if (empty($keyPath)) return;
 
         $config = array(
             "digest_alg" => "sha512",
-            "private_key_bits" => 2048,
+            "private_key_bits" => $bits,
             "private_key_type" => OPENSSL_KEYTYPE_RSA,
         );
 
@@ -39,13 +40,17 @@ class RSACrypt
 
         $this->publicKey = $pubKey['key'];
 
-        $this->publicKeyPath = $keyPath.'rsa_public_key.pem';
+        $this->publicKeyPath = $keyPath . 'rsa_public_key.pem';
 
-        $this->privateKeyPath = $keyPath.'rsa_private_key.pem';
+        $this->privateKeyPath = $keyPath . 'rsa_private_key.pem';
 
-        @file_put_contents($this->publicKeyPath, $this->publicKey);
+        if (!is_dir($keyPath)) mkdir($keyPath, 0777, true);
 
-        @file_put_contents($this->privateKeyPath, $this->privateKey);
+        if (file_exists($keyPath)) return;
+
+        file_put_contents($this->publicKeyPath, $this->publicKey);
+
+        file_put_contents($this->privateKeyPath, $this->privateKey);
 
     }
 
@@ -127,7 +132,7 @@ class RSACrypt
 
         openssl_free_key($publicKey);
 
-        return $encrypted;
+        return base64_encode($encrypted);
     }
 
     /**
@@ -139,7 +144,7 @@ class RSACrypt
     {
         $publicKey = $this->checkPublicKey();
 
-        openssl_public_decrypt($data, $decrypted, $publicKey);
+        openssl_public_decrypt(base64_decode($data), $decrypted, $publicKey);
 
         openssl_free_key($publicKey);
 
@@ -159,7 +164,7 @@ class RSACrypt
 
         openssl_free_key($privateKey);
 
-        return $encrypted;
+        return base64_encode($encrypted);
     }
 
     /**
@@ -171,7 +176,7 @@ class RSACrypt
     {
         $privateKey = $this->checkPrivateKey();
 
-        openssl_private_decrypt($data, $decrypted, $privateKey);
+        openssl_private_decrypt(base64_decode($data), $decrypted, $privateKey);
 
         openssl_free_key($privateKey);
 
@@ -246,7 +251,7 @@ class RSACrypt
             //读取公钥文件
             $pubKey = @file_get_contents($this->publicKeyPath);
 
-            $pubKey or exit('公钥不存在!');
+            $pubKey or exit('public key is not exists!');
 
             //转换为openssl格式密钥
             $res = openssl_pkey_get_public($pubKey);
@@ -267,7 +272,7 @@ class RSACrypt
 
         } else {
 
-            exit('公钥不存在');
+            exit('public key is not exists!');
 
         }
 
@@ -285,7 +290,7 @@ class RSACrypt
             //读取私钥文件
             $priKey = @file_get_contents($this->privateKeyPath);
 
-            $priKey or exit('私钥不存在!');
+            $priKey or exit('private key is not exists!');
 
             //转换为openssl格式密钥
             $res = openssl_get_privatekey($priKey);
@@ -306,7 +311,7 @@ class RSACrypt
 
         } else {
 
-            exit('私钥不存在!');
+            exit('private key is not exists!');
 
         }
 
@@ -314,3 +319,35 @@ class RSACrypt
     }
 
 }
+
+/**
+ * DEMO
+ */
+
+$keyPath = './rsaKey/'; //if you don't have public key and private key, then you can creating it.
+$rsa = new RSACrypt($keyPath);
+$encryptData = "I'm RSA encryptData";
+$encrypted = $rsa->publicEncrypt($encryptData); //output encrypt base64
+echo $encrypted;
+echo '<br/>';
+$decrypted = $rsa->privateDecrypt($encrypted); //output decrypt base64
+echo $decrypted;
+
+//also you can ...
+$rsa = new RSACrypt(); //if you have rsa key file
+$rsa->setPrivateKeyPath('your private key path');
+$rsa->setPublicKeyPath('your public key path');
+//or
+$pubKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt7iiFbB++U/6+Cyy5EmT
+osbj8pStRUfcCJ1SIwJUF4oe9dCt4KGMjh9QSMFgIcdDFYDyk1yb3a40BiSLkIsi
+L5auf+LuVYH7yMCaE144NpadEe9oYTixdSifgTOYdUhEHGxc3xATwIA4A8GMCSYL
+f3yNfqjf7jbRr/RzCNWVPss0Iyg8bE9eCoVsF6GEl6PeQ4t6TmVSLPZIHuib/GYg
+FDeoozLAQDQ85HoAoIPqRoVx29vLhtzsH7x6RqHXk0tKZDI/oP+JY3ppxDsqXGAI
+zPXmQBKotQD9JvWGvHUPcVlc3VPJNsw9kyQ/jTkumw3V76UBJy8j32u9iNNKsjBw
+PQIDAQAB';
+$priKey = 'your private key';
+
+$rsa->setPrivateKey($priKey);
+$rsa->setPublicKey($pubKey);
+
+

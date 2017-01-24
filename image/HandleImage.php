@@ -1,10 +1,7 @@
 <?php
 
 /**
- * Author: Evai
- * compress image and add image mark
- * 压缩图片
- * 图片水印
+ * compress image and add mark for image
  */
 class Image
 {
@@ -32,7 +29,6 @@ class Image
     private $imageAlpha = 50;
 
     /**
-     * 打开一张图片，读取到内存中
      * Image constructor.
      * @param $imageSrc
      */
@@ -256,8 +252,8 @@ class Image
      */
     function save($imagePath = '')
     {
-        $time = date('YmdHis') . str_pad(floor(microtime() * 1000), 3, 0, STR_PAD_LEFT);
-        $imagePath = $imagePath ? $imagePath : $time . '.' . $this->imageInfo['type'];
+        $time = date('YmdHis') . mt_rand(1000, 9999);
+        $imagePath .= $time . '.' . $this->imageInfo['type'];
         $func = "image{$this->imageInfo['type']}";
         $res = $func($this->image, $imagePath);
         return $res;
@@ -292,11 +288,13 @@ class Image
     }
 }
 
+
 /**
  * DEMO
+ * ======================================
+ * add font mark
  */
-//add font mark
-/*$image = new Image('./demo.jpg'); //The image path
+$image = new Image('./demo.jpg'); //The image path
 $content = 'Font Mark'; //mark content
 $font_url = './font/arial.ttf'; //mark font
 $size = 24; //font size
@@ -309,22 +307,28 @@ $image->addFontContent($content)
     ->addFontColor($color)
     ->addFontRotate($rotate)
     ->addFontPos($pos)
-    ->addFontMark();*/
+    ->addFontMark();
 //$image->show();
 
-//add image mark
-$image = new Image('./demo.jpg'); //The image path
-
-/*$width = $image->getImageWidth() * 0.5;
-$height = $image->getImageHeight() * 0.5;
-$image->compress($width, $height);*/
-
-//$markImage->save('cloth.' . $markImage->getImageSuffix());
+/**
+ * add image mark
+ */
 
 $image->addImageSource('car.png')
     ->addImagePos(['x' => 10, 'y' => 10])
     ->addImageAlpha(100)
     ->addImageMark();
-$image->show();
+//$image->show();
+
+/**
+ * compress image and save image
+ */
+
+$width = $image->getImageWidth() * 0.5;
+$height = $image->getImageHeight() * 0.5;
+$image->compress($width, $height);
+
+$image->save('../'); //save path
+
 
 

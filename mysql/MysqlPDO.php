@@ -115,7 +115,7 @@ class MysqlPDO
      * 调试模式
      * @var bool
      */
-    public $debug = false;
+    public $debug = true;
     /**
      * 返回值
      * @var array
@@ -192,6 +192,9 @@ class MysqlPDO
 
     }
 
+    /**
+     * @param Exception $e
+     */
     private function getError(Exception $e)
     {
         if ($this->debug) {
@@ -211,7 +214,7 @@ class MysqlPDO
 
     /**
      * 执行入口
-     * @param $sql  执行语句
+     * @param $sql
      * @param null $values
      */
     private function run($sql, $values = null)
@@ -252,7 +255,7 @@ class MysqlPDO
 
     /**
      * 主从分离
-     * @param $sql  执行语句
+     * @param $sql
      * @param null $values
      */
     private function separate($sql, $values = null) {
@@ -260,7 +263,7 @@ class MysqlPDO
         $queryStr = substr($sql, 0, 6);
 
         //如果是查询语句就去从服务器查询
-        if('select' === strtolower($queryStr))
+        if('select' == strtolower($queryStr))
         {
 
             $this->read_stmt = $this->read_conn->prepare($sql);
@@ -1005,7 +1008,6 @@ class MysqlPDO
 
     /**
      * 删除表
-     * @param $tableName  表名
      * @return bool
      */
     function dropTable()
@@ -1198,8 +1200,8 @@ class MysqlPDO
     }
 
     /**
-     * 删除索引
-     * @param null $column  索引名
+     *
+     * @param null $indexName  索引名
      * @return bool
      */
     function dropIndex($indexName = null)
@@ -1270,5 +1272,15 @@ class MysqlPDO
 
         return $data;
     }
+
+    /**
+     * 主键查询
+     * @param $id
+     * @return mixed
+     */
+    /*function find($id)
+    {
+        return $this->table($this->tableName)->where($this->primaryKey . ' = ?', [$id])->first();
+    }*/
 
 }

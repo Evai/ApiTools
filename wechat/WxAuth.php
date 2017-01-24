@@ -9,10 +9,9 @@
 class WxAuth {
 
     //公众号的appId和appSecret
-    const APP_ID ='wx9ce4d90e6758d535';
-    const APP_SECRET = "00a1d5ae2ffde09de28ca3b05acb815b";
+    private $appId;
+    private $appSecret;
     public $debug = false;
-
 
     /**
      * 获取微信授权链接，获取用户的基本信息
@@ -22,12 +21,14 @@ class WxAuth {
      * @param string $state 参数
      * @return string
      */
-    public function authorize_url_userinfo($redirect_uri, $state = '321')
+    public function authorize_user_info($redirect_uri, $state = '321')
     {
 
         $redirect_uri = urlencode($redirect_uri);
 
-        return "https://open.weixin.qq.com/connect/oauth2/authorize?appid=" . self::APP_ID . "&redirect_uri={$redirect_uri}&response_type=code&scope=snsapi_userinfo&state={$state}#wechat_redirect";
+        $auth_url = "https://open.weixin.qq.com/connect/oauth2/authorize?appid={$this->appId}&redirect_uri={$redirect_uri}&response_type=code&scope=snsapi_userinfo&state={$state}#wechat_redirect";
+
+        header('Location:' . $auth_url);
 
     }
 
@@ -45,7 +46,7 @@ class WxAuth {
 
         if(!empty($state)) $state = "&state={$state}";
 
-        return "https://open.weixin.qq.com/connect/oauth2/authorize?appid=" . self::APP_ID . "&redirect_uri={$redirect_uri}&response_type=code&scope=snsapi_base{$state}#wechat_redirect";
+        return "https://open.weixin.qq.com/connect/oauth2/authorize?appid={$this->appId}&redirect_uri={$redirect_uri}&response_type=code&scope=snsapi_base{$state}#wechat_redirect";
 
     }
 
@@ -75,7 +76,7 @@ class WxAuth {
     public function get_access_token($code)
     {
 
-        $token_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . self::APP_ID . '&secret=' . self::APP_SECRET . '&code=' . $code . '&grant_type=authorization_code';
+        $token_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . $this->appId . '&secret=' . $this->appSecret . '&code=' . $code . '&grant_type=authorization_code';
 
         $token_data = $this->curl_http($token_url);
 
@@ -135,7 +136,7 @@ class WxAuth {
     public function refresh_access_token($refresh_token)
     {
 
-        $refresh_url = 'https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=' . self::APP_ID . '&grant_type=refresh_token&refresh_token=' . $refresh_token;
+        $refresh_url = 'https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=' . $this->appId . '&grant_type=refresh_token&refresh_token=' . $refresh_token;
 
         $refresh_data = $this->curl_http($refresh_url, 'GET');
 
@@ -196,27 +197,21 @@ class WxAuth {
      * @param $access_data
      * @return array|bool|mixed
      */
-    public function filter_data($access_data)
+    private function filter_data($access_data)
     {
         if (isset($access_data->access_token)) {
 
-            //第三步：检验授权凭证（access_token）是否有效
+            //检验授权凭证（access_token）是否有效
             if ($this->check_access_token($access_data->access_token, $access_data->openid)) {
-                //第四步：拉取用户信息(需scope为 snsapi_userinfo)
+                //拉取用户信息(需scope为 snsapi_userinfo)
                 $user_info = $this->get_user_info($access_data->access_token, $access_data->openid);
 
                 return $user_info;
 
-            } else {
-                //如果无效，重新跳转到授权页面
-
-                $redirect_url = 'http://test.sanhaohuisuo.com/wechat';
-
-                $auth_url = $this->authorize_url_userinfo($redirect_url);
-                header('Location:' . $auth_url);
-
             }
+
         }
+
         return false;
     }
 
@@ -226,10 +221,37 @@ class WxAuth {
      */
     public function execute($code)
     {
-        //第二步：通过code换取网页授权access_token
+
         $access_data = $this->get_access_token($code);
 
         return $this->filter_data($access_data);
     }
 
 }
+
+/**
+ * DEMO
+ */
+$wx = new WxAuth();
+$redirect_url = 'your redirect url';
+//第一步：获取微信授权链接，进行跳转，用户同意授权，获取code
+$auth_url = $wx->authorize_user_info($redirect_url);
+
+//第二步：通过code换取网页授权access_token
+$code = $_REQUEST['code'];
+$state = $_REQUEST['state'];
+
+$user_info = $wx->execute($code);
+
+if (empty($user_info)) {
+    //如果失败，重新跳转到授权页面
+    $auth_url = $wx->authorize_user_info($redirect_url);
+} else {
+    //成功则返回用户的基本信息，然后处理业务逻辑
+    
+}
+
+
+
+
+

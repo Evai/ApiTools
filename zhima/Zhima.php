@@ -110,7 +110,6 @@ class Zhima
 
 }
 
-//exit($_REQUEST['act']);
 $act = isset($_REQUEST['act']) ? $_REQUEST['act'] : '';
 $encryptData = isset($_REQUEST['encryptData']) ? $_REQUEST['encryptData'] : '';
 $openId = isset($_REQUEST['openId']) ? $_REQUEST['openId'] : '';
