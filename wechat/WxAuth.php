@@ -14,6 +14,17 @@ class WxAuth {
     public $debug = false;
 
     /**
+     * WxAuth constructor.
+     * @param $appId
+     * @param $appSecret
+     */
+    public function __construct($appId, $appSecret)
+    {
+        $this->appId = $appId;
+        $this->appSecret = $appSecret;
+    }
+
+    /**
      * 获取微信授权链接，获取用户的基本信息
      * 如果用户同意授权，页面将跳转至 redirect_uri/?code=CODE&state=STATE。
      * 若用户禁止授权，则重定向后不会带上code参数，仅会带上state参数redirect_uri?state=STATE
@@ -232,7 +243,10 @@ class WxAuth {
 /**
  * DEMO
  */
-$wx = new WxAuth();
+$appId = 'your appid';
+$appSecret = 'your appsecret';
+$wx = new WxAuth($appId, $appSecret);
+
 $redirect_url = 'your redirect url';
 //第一步：获取微信授权链接，进行跳转，用户同意授权，获取code
 $auth_url = $wx->authorize_user_info($redirect_url);
@@ -248,7 +262,7 @@ if (empty($user_info)) {
     $auth_url = $wx->authorize_user_info($redirect_url);
 } else {
     //成功则返回用户的基本信息，然后处理业务逻辑
-    
+
 }
 
 
