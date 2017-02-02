@@ -262,7 +262,7 @@ if (empty($user_info)) {
     $auth_url = $wx->authorize_user_info($redirect_url);
 } else {
     //成功则返回用户的基本信息，然后处理业务逻辑
-
+    var_dump($user_info);
 }
 
 
