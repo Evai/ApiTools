@@ -88,24 +88,26 @@ class Request
 
                 $length = explode('-', $length);
 
-                if (count($length) == 1) {
-
-                   if (strlen($param) > $length[0]) exit($this->returnResponse(-401, $msg . '字段名不能超过' . $length . '个字节'));
-
-                }
-
             }
 
-            $min = $length[0];
-            $max = $length[1];
+            if (count($length) == 1) {
 
-            if ($min > strlen($param)) {
+                if (strlen($param) != $length[0]) exit($this->returnResponse(-401, $msg . '字段名长度必须为' . $length[0] . '个字节'));
 
-                exit($this->returnResponse(-401, $msg . '字段名不能少于' . $min . '个字节'));
+            } else {
 
-            } elseif ($max < strlen($param)) {
+                $min = $length[0];
+                $max = $length[1];
 
-                exit($this->returnResponse(-401, $msg . '字段名不能超过' . $max . '个字节'));
+                if ($min > strlen($param)) {
+
+                    exit($this->returnResponse(-401, $msg . '字段名不能少于' . $min . '个字节'));
+
+                } elseif ($max < strlen($param)) {
+
+                    exit($this->returnResponse(-401, $msg . '字段名不能超过' . $max . '个字节'));
+
+                }
 
             }
 
@@ -166,14 +168,17 @@ class Request
         }
 
         return json_encode($this->resArr, JSON_UNESCAPED_UNICODE);
+
     }
 
 }
 
+/**
+ * DEMO
+ */
 $req = new Request();
-$name = $req->validateParam('name', $_REQUEST['name'] ?: '', 'Evai', '3-23', true);
-$mobile = $req->validateParam('mobile', $_REQUEST['mobile'] ?: '13333333333', '', 11, true);
+$name = $req->validateParam('name', $_REQUEST['name'], 'Evai', '3-12', true);
+$mobile = $req->validateParam('mobile', $_REQUEST['mobile'], '', 11, true);
+$email = $req->validateParam('email', $_REQUEST['email'], 'evai@gmail.com');
 $user = ['name' => $name, 'mobile'=> $mobile];
-$banner = true;
-$data = compact('user', 'banner');
-echo $req->returnResponse(0, 'success', $data);
+echo $req->returnResponse(0, 'success', compact('user', 'email'));
