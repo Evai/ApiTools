@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Class Request
  */
@@ -14,16 +13,16 @@ class Request
      */
     public function __construct()
     {
-
+        $this->requestLimit();
     }
 
     /**
      * 请求次数限制
-     * @param int $limit  次数限制
-     * @param int $range  时间限制(单位：秒)
-     * @throws Exception
+     * request limit
+     * @param int $limit
+     * @param int $time  (unit：sec)
      */
-    public function requestLimit($limit = 60, $range = 60)
+    public function requestLimit($limit = 60, $time = 60)
     {
         session_start();
         //请求时间
@@ -39,12 +38,9 @@ class Request
 
         $requestRemain = $limit - $_SESSION['request' . $requestUrl . $session_id];
 
-        if ($RequestTime - $_SESSION['finalRequestTime'] < $range) {
+        if ($RequestTime - $_SESSION['finalRequestTime'] < $time) {
 
-            if ($requestRemain <= 0)
-            {
-                throw new \Exception('Maximum number of requests exceeded limit');
-            }
+            if ($requestRemain <= 0) exit('Maximum number of requests exceeded limit');
 
             $_SESSION['request' . $requestUrl . $session_id] += 1;
 
@@ -68,7 +64,7 @@ class Request
      * @param bool $checkEmpty
      * @return int|null|string
      */
-    public function getArgs($msg = '参数名称', $param = null, $default = '', $length = 0, $checkEmpty = false)
+    public function validateParam($msg = 'param name', $param = null, $default = '', $length = 0, $checkEmpty = false)
     {
         if(empty($param)) {
 
@@ -80,15 +76,38 @@ class Request
 
         if (!is_string($param)) {
 
-            exit($this->returnResponse(-400, $msg . '字段类型错误，请用 String 类型', 'none'));
+            exit($this->returnResponse(-400, $msg . '字段类型错误，请用 String 类型'));
 
         }
 
         $param = trim($param);
 
-        if ($length > 0 && strlen($param) > $length) {
+        if (0 != $length) {
 
-            exit($this->returnResponse(-401, $msg . '字段名称过长,请不要超过' . $length . '个字节', 'none'));
+            if (!is_array($length)) {
+
+                $length = explode('-', $length);
+
+                if (count($length) == 1) {
+
+                   if (strlen($param) > $length[0]) exit($this->returnResponse(-401, $msg . '字段名不能超过' . $length . '个字节'));
+
+                }
+
+            }
+
+            $min = $length[0];
+            $max = $length[1];
+
+            if ($min > strlen($param)) {
+
+                exit($this->returnResponse(-401, $msg . '字段名不能少于' . $min . '个字节'));
+
+            } elseif ($max < strlen($param)) {
+
+                exit($this->returnResponse(-401, $msg . '字段名不能超过' . $max . '个字节'));
+
+            }
 
         }
 
@@ -111,7 +130,7 @@ class Request
     {
         if(empty($param)) {
 
-            exit($this->returnResponse(-300, $msg . ' 字段名称不能为空', 'none'));
+            exit($this->returnResponse(-300, $msg . '字段名称不能为空'));
 
         }
     }
@@ -152,7 +171,9 @@ class Request
 }
 
 $req = new Request();
-$user = ['user_id'=>1, 'mobile'=> 133333333333, 'name' => 'evai'];
+$name = $req->validateParam('name', $_REQUEST['name'] ?: '', 'Evai', '3-23', true);
+$mobile = $req->validateParam('mobile', $_REQUEST['mobile'] ?: '13333333333', '', 11, true);
+$user = ['name' => $name, 'mobile'=> $mobile];
 $banner = true;
 $data = compact('user', 'banner');
-echo $req->returnResponse(200, 'success', $data);
+echo $req->returnResponse(0, 'success', $data);
