@@ -1,9 +1,11 @@
 <?php
 
+namespace Image;
+
 /**
  * compress image and add mark for image
  */
-class Image
+class HandleImage
 {
     //图片信息
     private $imageInfo;
@@ -287,48 +289,4 @@ class Image
         $this->imageInfo = null;
     }
 }
-
-
-/**
- * DEMO
- * ======================================
- * add font mark
- */
-$image = new Image('./demo.jpg'); //The image path
-$content = 'Font Mark'; //mark content
-$font_url = './font/arial.ttf'; //mark font
-$size = 24; //font size
-$color = [255, 255, 255, 20]; //font color
-$pos = ['x' => 20, 'y' => 100]; //font position
-$rotate = 10; //font rotate
-$image->addFontContent($content)
-    ->addFontUrl($font_url)
-    ->addFontSize($size)
-    ->addFontColor($color)
-    ->addFontRotate($rotate)
-    ->addFontPos($pos)
-    ->addFontMark();
-//$image->show();
-
-/**
- * add image mark
- */
-
-$image->addImageSource('car.png')
-    ->addImagePos(['x' => 10, 'y' => 10])
-    ->addImageAlpha(100)
-    ->addImageMark();
-//$image->show();
-
-/**
- * compress image and save image
- */
-
-$width = $image->getImageWidth() * 0.5;
-$height = $image->getImageHeight() * 0.5;
-$image->compress($width, $height);
-
-$image->save('../'); //save path
-
-
 

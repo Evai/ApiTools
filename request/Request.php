@@ -1,19 +1,23 @@
 <?php
+
+namespace Request;
+
 /**
  * Class Request
+ * @package ApiTools\request
  */
-
 class Request
-
 {
-    private $resArr = ['code' => -1, 'msg' => 'request error'];
-
     /**
      * Request constructor.
      */
     public function __construct()
     {
-        $this->requestLimit();
+        //$this->requestLimit();
+        if(!isset($_SESSION))
+        {
+            session_start();
+        }
     }
 
     /**
@@ -24,7 +28,6 @@ class Request
      */
     public function requestLimit($limit = 60, $time = 60)
     {
-        session_start();
         //请求时间
         $RequestTime = $_SERVER['REQUEST_TIME'];
         //请求唯一标识
@@ -55,130 +58,299 @@ class Request
 
     }
 
+
     /**
-     * 验证字段
-     * @param string $msg
-     * @param null $param
-     * @param string $default
-     * @param int $length
-     * @param bool $checkEmpty
-     * @return int|null|string
+     * 检测请求方式
+     * @param $method
+     * @return mixed
      */
-    public function validateParam($msg = 'param name', $param = null, $default = '', $length = 0, $checkEmpty = false)
+    public function checkMethod($method = null)
     {
-        if(empty($param)) {
+        if (empty($method)) return $_SERVER['REQUEST_METHOD'];
 
-            if ($checkEmpty) $this->isEmpty($msg, $default);
+        if (strtoupper($method) == $_SERVER['REQUEST_METHOD']) return true;
 
-            return $default;
+        return false;
+    }
 
-        }
+    /**
+     * 模拟post进行url请求
+     * @param $url
+     * @param string $method
+     * @param null $post_fields
+     * @return array
+     */
+    public function curlHttpRequest($url, $method = 'GET', $post_fields = null)
+    {
+        $ch = curl_init();
 
-        if (!is_string($param)) {
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);//设置超时
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);//要求结果为字符串且输出到屏幕上
 
-            exit($this->returnResponse(-400, $msg . '字段类型错误，请用 String 类型'));
-
-        }
-
-        $param = trim($param);
-
-        if (0 != $length) {
-
-            if (!is_array($length)) {
-
-                $length = explode('-', $length);
-
+        if (strtoupper($method) == 'POST') {
+            curl_setopt($ch, CURLOPT_POST, 1);//post提交方式
+            if (!empty($post_fields)) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
             }
+        }
 
-            if (count($length) == 1) {
+        curl_setopt($ch, CURLOPT_URL, $url);//抓取指定网页
+        curl_setopt($ch, CURLOPT_HEADER, 0);//设置header
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);//严格校验
 
-                if (strlen($param) != $length[0]) exit($this->returnResponse(-401, $msg . '字段名长度必须为' . $length[0] . '个字节'));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            } else {
+        if ($httpCode !== 200) {
 
-                $min = $length[0];
-                $max = $length[1];
+            echo '======post data======' . '<br/>';
+            var_dump($post_fields);
+            echo '<br/>';
 
-                if ($min > strlen($param)) {
+            echo '======http info======' . '<br/>';
+            var_dump(curl_getinfo($ch));
+            echo '<br/>';
 
-                    exit($this->returnResponse(-401, $msg . '字段名不能少于' . $min . '个字节'));
+            echo '======response======' . '<br/>';
+            print_r($response);
 
-                } elseif ($max < strlen($param)) {
-
-                    exit($this->returnResponse(-401, $msg . '字段名不能超过' . $max . '个字节'));
-
-                }
-
-            }
+            curl_close($ch);
+            exit;
 
         }
 
-        $param = stripcslashes($param);
-
-        $param = is_numeric($default) ? intval($param) : $param;
-
-        if ($checkEmpty) $this->isEmpty($msg, $param);
-
-        return $param;
+        curl_close($ch);
+        return $response;
 
     }
 
     /**
-     * 检测值是否为空
-     * @param $msg
-     * @param $param
-     */
-    public function isEmpty($msg, $param)
-    {
-        if(empty($param)) {
-
-            exit($this->returnResponse(-300, $msg . '字段名称不能为空'));
-
-        }
-    }
-
-    /**
-     * 请求返回值 {"code":0, "msg":"success", "data":{["user":{},"banner":[]]}}
-     * @param int $code
-     * @param string $msg
-     * @param array $res
+     * 获取客户端IP
      * @return string
      */
-    public function returnResponse($code = 0, $msg = 'success', $res = [])
+    public function getClientIP()
     {
+        $ip = "Unknow IP";
 
-        $this->resArr['code'] = $code;
-        $this->resArr['msg'] = $msg;
+        if (getenv("HTTP_CLIENT_IP"))
 
-        if ($res) {
+            $ip = $this->checkIp(getenv('HTTP_CLIENT_IP')) ? getenv('HTTP_CLIENT_IP'): 'Unknow IP';
 
-            if (!is_array($res)) {
+        else if(getenv("HTTP_X_FORWARDED_FOR"))
 
-                $res = compact('res');
+            $ip = $this->checkIp(getenv('HTTP_X_FORWARDED_FOR')) ? getenv('HTTP_X_FORWARDED_FOR') : $ip;
 
-            }
+        else if(getenv("REMOTE_ADDR"))
 
-            foreach ($res as $k => $v)
-            {
+            $ip = $this->checkIp(getenv('REMOTE_ADDR')) ? getenv('REMOTE_ADDR') : $ip;
 
-                if (!empty($v)) $this->resArr['data'][$k] = $v;
+        else $ip = "Unknow IP";
 
-            }
+        return $ip;
+    }
+
+    /**
+     * 检测是否是有效IP
+     * @param $str
+     * @return bool|int
+     */
+    public function checkIp($str)
+    {
+        $ip = explode('.', $str);
+
+        for ($i = 0; $i < count($ip); $i++) {
+
+            if ($ip[$i] > 255) return false;
 
         }
 
-        return json_encode($this->resArr, JSON_UNESCAPED_UNICODE);
+        return preg_match('/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/', $str);
+    }
 
+    /**
+     * @return array
+     */
+    public function getAgentInfo()
+    {
+        $agent = $_SERVER['HTTP_USER_AGENT'];
+
+        $browserList = ['MSIE', 'Firefox', 'QQBrowser', 'QQ/', 'UCBrowser', 'MicroMessenger', 'Edge', 'Chrome', 'Opera', 'OPR', 'Safari', 'Trident/'];
+
+        $systemList = ['Windows Phone', 'Windows', 'Android', 'iPhone', 'iPad'];
+
+        $browser = 0;//未知
+        $system = 0;//未知
+
+        foreach ($browserList as $bro) {
+            if (stripos($agent, $bro) !== false) {
+                $browser = $bro;
+                break;
+            }
+        }
+
+        foreach ($systemList as $sys) {
+            if (stripos($agent, $sys) !== false) {
+                $system = $sys;
+                break;
+            }
+        }
+
+        return ['sys' => $system, 'bro' => $browser];
+    }
+
+    /**
+     * @return mixed
+     */
+    public function all()
+    {
+        return $GLOBALS;
+    }
+
+    /**
+     * @param null $key
+     * @return null
+     */
+    public function server($key = null)
+    {
+        if (empty($key)) return $_SERVER;
+
+        return isset($_SERVER[$key]) ? $_SERVER[$key] : null;
+    }
+
+    /**
+     * @param null $key
+     * @return mixed
+     */
+    public function files($key = null)
+    {
+        if (empty($key)) return $_FILES;
+
+        return isset($_FILES[$key]) ? $_FILES[$key] : null;
+    }
+
+    /**
+     * @param null $key
+     * @param null $value
+     * @return null
+     */
+    public function session($key = null, $value = null)
+    {
+        if ($key && empty($value))  return isset($_SESSION[$key]) ? $_SESSION[$key] : null;
+
+        elseif ($key && $value) $_SESSION[$key] = $value;
+
+        else return $_SESSION;
+    }
+
+    /**
+     * @param $key
+     */
+    public function sessionRemove($key = null)
+    {
+        if (empty($key)) session_destroy();
+
+        else unset($_SESSION[$key]);
+    }
+
+    /**
+     * @param null $key
+     * @return null
+     */
+    public function sessionFlash($key = null)
+    {
+        $session = $_SESSION;
+
+        if (empty($key)) {
+            $this->sessionRemove();
+            return $session;
+        }
+
+        $this->sessionRemove($key);
+        return isset($session[$key]) ? $session[$key] : null;
+    }
+
+    /**
+     * @param null $key
+     * @param null $value
+     * @param int $expire
+     * @return null
+     */
+    public function cookie($key = null, $value = null, $expire = 24*60*60)
+    {
+        if ($key && empty($value))  return isset($_COOKIE[$key]) ? $_COOKIE[$key] : null;
+
+        elseif ($key && $value)
+
+            setcookie($key, $value, time() + $expire);
+
+        else return $_COOKIE;
+    }
+
+    /**
+     * @param null $key
+     */
+    public function cookieRemove($key = null)
+    {
+        if (empty($key)) {
+            foreach ($_COOKIE as $k => $v) {
+                setcookie($k, '', time() - 3600);
+            }
+        } else {
+            setcookie($key, '', time() - 3600);
+        }
+    }
+
+    /**
+     * @param null $key
+     * @return null
+     */
+    public function input($key = null)
+    {
+        if (empty($key)) return $_REQUEST;
+
+        return isset($_REQUEST[$key]) ? $_REQUEST[$key] : null;
+    }
+
+    /**
+     * @param $key
+     * @return mixed
+     */
+    public function post($key = null)
+    {
+        if (empty($key)) return $_POST;
+
+        return isset($_POST[$key]) ? $_POST[$key] : null;
+    }
+
+    /**
+     * @param null $key
+     * @return mixed
+     */
+    public function get($key = null)
+    {
+        if (empty($key)) return $_GET;
+
+        return isset($_GET[$key]) ? $_GET[$key] : null;
+    }
+
+    /**
+     * @param $name
+     * @param $value
+     */
+    public function __set($name, $value)
+    {
+        echo "Setting '$name' to '$value'\n";
+    }
+
+    /**
+     * @param $name
+     * @return null
+     */
+    public function __get($name)
+    {
+        return $this->input($name);
     }
 
 }
-
-/**
- * DEMO
- */
-$req = new Request();
-$name = $req->validateParam('name', $_REQUEST['name'], 'Evai', '3-12', true);
-$mobile = $req->validateParam('mobile', $_REQUEST['mobile'], '', 11, true);
-$email = $req->validateParam('email', $_REQUEST['email'], 'evai@gmail.com');
-$user = ['name' => $name, 'mobile'=> $mobile];
-echo $req->returnResponse(0, 'success', compact('user', 'email'));

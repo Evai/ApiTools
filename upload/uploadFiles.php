@@ -1,9 +1,10 @@
 <?php
 
+namespace Upload;
 /**
  * Class uploadFiles
  */
-class uploadFiles
+class UploadFiles
 {
     /**
      * @var int
@@ -298,7 +299,7 @@ class uploadFiles
      *
      * @return int The maximum size of an uploaded file in bytes
      */
-    private static function getMaxFileSize()
+    private function getMaxFileSize()
     {
         $iniMax = strtolower(ini_get('upload_max_filesize'));
 
@@ -343,7 +344,7 @@ class uploadFiles
 
             if (@move_uploaded_file($this->fileInfo['tmp_name'], $fileName)) {
 
-                return $fileName;
+                return [true, $fileName];
 
             }
 
@@ -351,7 +352,7 @@ class uploadFiles
 
         }
 
-        return $this->error;
+        return [false, $this->error];
 
     }
 
@@ -377,65 +378,21 @@ class uploadFiles
 
                 if (@file_put_contents($fileName, base64_decode(str_replace($result[1], '', $base64_img)))) {
 
-                    return $fileName;
+                    return [true, $fileName];
 
                 }
 
-                exit('could not save image.');
+                return [false, 'could not save image.'];
             }
 
-            exit('Not allowed image type.');
+           return [false, 'Not allowed image type.'];
 
         }
 
-        exit('Incorrect base64 image.');
+        return [false, 'Incorrect base64 image.'];
 
     }
 
 
 }
 
-/**
- * DEMO
- */
-
-$form = <<<EOF
-<form action="" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" onchange="upload(event)"/>
-    <input type="hidden" name="base64" id="base64" />
-    <input type="submit" value="上传文件"/>
-</form>
-<script>
-function upload(e) {
-
-    var render = new FileReader();
-    
-    var file = e.target.files[0];
-    
-    render.addEventListener('load', function (e) {
-
-        document.getElementById('base64').value = e.target.result;
-
-    }, false);
-    
-    render.readAsDataURL(file);
-    
-}
-</script>
-EOF;
-
-echo $form;
-
-$file = $_FILES['file'];
-$base64 = $_POST['base64'];
-
-$file = new uploadFiles($file);
-/*$file->setMaxSize(1024*1024*3)
-    ->setAllowExt(['png', 'jpeg', 'jpg'])
-    ->setAllowMine(['image/png', 'image/jpeg'])
-    ->setImageFlag(false);*/
-echo $file->uploadFile('./'); //upload file
-
-$file = new uploadFiles($base64);
-
-echo $file->uploadBase64('./'); //upload base64 image

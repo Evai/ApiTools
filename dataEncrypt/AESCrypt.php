@@ -1,5 +1,6 @@
 <?php
 
+namespace DataEncrypt;
 /**
  * Class AESCrypt
  */
@@ -79,20 +80,5 @@ class AESCrypt
     }
 
 }
-
-/**
- * DEMO
- */
-
-$key = md5('hello');
-$iv = '1234567887654321';
-$data = "I'm AES encrypt data";
-$aes = new AESCrypt($key, $iv);
-
-$encrypted = $aes->encrypt($data); //AES encrypt
-echo $encrypted . '<br/>';
-
-$decrypted = $aes->decrypt($encrypted); //AES decrypt
-echo $decrypted;
 
 
