@@ -1,5 +1,6 @@
 <?php
 
+namespace DataEncrypt;
 /**
  * Class RSA
  */
@@ -319,35 +320,5 @@ class RSACrypt
     }
 
 }
-
-/**
- * DEMO
- */
-
-$keyPath = './rsaKey/'; //if you don't have public key and private key, then you can creating it.
-$rsa = new RSACrypt($keyPath);
-$encryptData = "I'm RSA encryptData";
-$encrypted = $rsa->publicEncrypt($encryptData); //output encrypt base64
-echo $encrypted;
-echo '<br/>';
-$decrypted = $rsa->privateDecrypt($encrypted); //output decrypt base64
-echo $decrypted;
-
-//also you can ...
-$rsa = new RSACrypt(); //if you have rsa key file
-$rsa->setPrivateKeyPath('your private key path');
-$rsa->setPublicKeyPath('your public key path');
-//or
-$pubKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt7iiFbB++U/6+Cyy5EmT
-osbj8pStRUfcCJ1SIwJUF4oe9dCt4KGMjh9QSMFgIcdDFYDyk1yb3a40BiSLkIsi
-L5auf+LuVYH7yMCaE144NpadEe9oYTixdSifgTOYdUhEHGxc3xATwIA4A8GMCSYL
-f3yNfqjf7jbRr/RzCNWVPss0Iyg8bE9eCoVsF6GEl6PeQ4t6TmVSLPZIHuib/GYg
-FDeoozLAQDQ85HoAoIPqRoVx29vLhtzsH7x6RqHXk0tKZDI/oP+JY3ppxDsqXGAI
-zPXmQBKotQD9JvWGvHUPcVlc3VPJNsw9kyQ/jTkumw3V76UBJy8j32u9iNNKsjBw
-PQIDAQAB';
-$priKey = 'your private key';
-
-$rsa->setPrivateKey($priKey);
-$rsa->setPublicKey($pubKey);
 
 

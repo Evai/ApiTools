@@ -138,13 +138,8 @@ trait Common
      */
     public function validateParam($msg = 'param name', $param = null, $default = '', $length = 0, $checkEmpty = false)
     {
-        if(empty($param)) {
 
-            if ($checkEmpty) $this->isEmpty($msg, $default);
-
-            return $default;
-
-        }
+        if(empty($param)) $param = $default;
 
         if (!is_string($param)) {
 
@@ -286,10 +281,82 @@ trait Common
         if ($path && strpos($path, 'uploads' !== false))
         {
             $path = stristr($path, 'uploads');
-            if (@unlink($path)) {
-                return true;
-            }
+            if (@unlink($path)) return true;
         }
         return false;
     }
+
+    /**
+     * 生成唯一字符串
+     * @param string $type
+     * @param string $extra
+     * @return mixed
+     */
+    public function generateUnique($type = 'md5', $extra = '')
+    {
+        return $type(uniqid(md5(microtime(true).$extra),true));
+    }
+
+    /**
+     * @return string
+     */
+    public function generateOrderNum()
+    {
+        $time = date('YmdHis') . str_pad(floor(microtime() * 1000), 3, 0, STR_PAD_LEFT);
+        $inc = str_pad(mt_rand(1, 9999999999999), 13, 0, STR_PAD_LEFT);
+        return $time.$inc;
+    }
+
+    /**
+     * 计算两点地理坐标之间的距离
+     * @param $lat1 起点纬度
+     * @param $lng1 起点经度
+     * @param $lat2 终点纬度
+     * @param $lng2 终点经度
+     * @param int $decimal 精度 保留小数位数
+     * @return string
+     */
+    function getDistance($lat1, $lng1, $lat2, $lng2, $decimal = 2){
+
+        if (empty($lat1) || empty($lng1)) {
+            return '';
+        }
+
+        $earthRadius = 6367000; //approximate radius of earth in meters
+
+        $lat1 = ($lat1 * pi() ) / 180;
+        $lng1 = ($lng1 * pi() ) / 180;
+
+        $lat2 = ($lat2 * pi() ) / 180;
+        $lng2 = ($lng2 * pi() ) / 180;
+
+
+        $calcLongitude = $lng2 - $lng1;
+        $calcLatitude = $lat2 - $lat1;
+        $stepOne = pow(sin($calcLatitude / 2), 2) + cos($lat1) * cos($lat2) * pow(sin($calcLongitude / 2), 2);
+        $stepTwo = 2 * asin(min(1, sqrt($stepOne)));
+        $calculatedDistance = $earthRadius * $stepTwo;
+
+        if(round($calculatedDistance) >= 1000) {
+
+            return round($calculatedDistance / 1000, $decimal) . 'km';
+
+        }
+
+        return round($calculatedDistance) . 'm';
+
+    }
+
+    /**
+     * 获取某个段时间
+     * @param string $time
+     * @param string $timezone
+     * @return false|int
+     */
+    function getTodayAnytime($time = '00:00', $timezone = 'Asia/Shanghai')
+    {
+        $d = new \DateTime($time, new \DateTimeZone($timezone));
+        return strtotime($d->format("Y-m-d H:i:s"));
+    }
+
 }

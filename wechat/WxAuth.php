@@ -1,9 +1,9 @@
 <?php
 
+namespace WeChat;
 /**
- * 微信授权相关接口
- *
  * Class WxAuth
+ * @package WeChat
  */
 
 class WxAuth {
@@ -238,31 +238,6 @@ class WxAuth {
         return $this->filter_data($access_data);
     }
 
-}
-
-/**
- * DEMO
- */
-$appId = 'your appid';
-$appSecret = 'your appsecret';
-$wx = new WxAuth($appId, $appSecret);
-
-$redirect_url = 'your redirect url';
-//第一步：获取微信授权链接，进行跳转，用户同意授权，获取code
-$auth_url = $wx->authorize_user_info($redirect_url);
-
-//第二步：通过code换取网页授权access_token
-$code = $_REQUEST['code'];
-$state = $_REQUEST['state'];
-
-$user_info = $wx->execute($code);
-
-if (empty($user_info)) {
-    //如果失败，重新跳转到授权页面
-    $auth_url = $wx->authorize_user_info($redirect_url);
-} else {
-    //成功则返回用户的基本信息，然后处理业务逻辑
-    var_dump($user_info);
 }
 
 

@@ -254,8 +254,8 @@ class HandleImage
      */
     function save($imagePath = '')
     {
-        $time = date('YmdHis') . mt_rand(1000, 9999);
-        $imagePath .= $time . '.' . $this->imageInfo['type'];
+        $time = date('Y-m-d-H-i-s-') . uniqid();
+        $imagePath .= '/' . $time . '.' . $this->imageInfo['type'];
         $func = "image{$this->imageInfo['type']}";
         $res = $func($this->image, $imagePath);
         return $res;

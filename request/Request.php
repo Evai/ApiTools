@@ -289,17 +289,11 @@ class Request
     }
 
     /**
-     * @param null $key
+     * @param $key
      */
-    public function cookieRemove($key = null)
+    public function cookieRemove($key)
     {
-        if (empty($key)) {
-            foreach ($_COOKIE as $k => $v) {
-                setcookie($k, '', time() - 3600);
-            }
-        } else {
-            setcookie($key, '', time() - 3600);
-        }
+        setcookie($key, '', time() - 3600);
     }
 
     /**
