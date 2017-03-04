@@ -359,10 +359,18 @@ class UploadFiles
     /**
      * base64图片上传
      * @param $uploadPath
-     * @return string
+     * @param null $fileName
+     * @param int $size
+     * @return array
      */
-    public function uploadBase64($uploadPath)
+    public function uploadBase64($uploadPath, $fileName = null, $size = 0)
     {
+
+        if ($size > 0 && strlen($fileName) >= $size) {
+
+            return [false, 'The file is out of range ' . $size / 1024 . 'KB'];
+
+        }
 
         $base64_img = trim($this->base64_img);
 
@@ -374,7 +382,7 @@ class UploadFiles
 
             if (in_array($type, $this->allowExt)) {
 
-                $fileName = $uploadPath . '/' . date('Y-m-d-H-i-s-') . uniqid() . '.' . $type;
+                $fileName = $fileName ? $fileName : $uploadPath . '/' . date('Y-m-d-H-i-s-') . uniqid() . '.' . $type;
 
                 if (@file_put_contents($fileName, base64_decode(str_replace($result[1], '', $base64_img)))) {
 
@@ -385,7 +393,7 @@ class UploadFiles
                 return [false, 'could not save image.'];
             }
 
-           return [false, 'Not allowed image type.'];
+            return [false, 'Not allowed image type.'];
 
         }
 

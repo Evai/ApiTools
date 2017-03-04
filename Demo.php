@@ -153,7 +153,7 @@ EOF;
 
     public function compress()
     {
-        $image = new HandleImage('./Image/demo.jpg');
+        $image = new HandleImage('./Image/demo.jpg');//or base64 image
         $width = $image->getImageWidth() * 0.8;
         $height = $image->getImageHeight() * 0.8;
         $image->compress($width, $height);
